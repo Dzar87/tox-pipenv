@@ -1,8 +1,9 @@
-import sys
+import contextlib
 import os
+import sys
+
 import tox
 from tox import hookimpl
-import contextlib
 
 
 def _init_pipenv_environ():
@@ -36,10 +37,10 @@ def _clone_pipfile(venv):
 @contextlib.contextmanager
 def wrap_pipenv_environment(venv, pipfile_path):
     old_pipfile = os.environ.get("PIPENV_PIPFILE", None)
-    os.environ["PIPENV_PIPFILE"] = str(pipfile_path)
     old_pipvenv = os.environ.get("PIPENV_VIRTUALENV", None)
-    os.environ["PIPENV_VIRTUALENV"] = os.path.join(str(venv.path))
     old_venv = os.environ.get("VIRTUAL_ENV", None)
+    os.environ["PIPENV_PIPFILE"] = str(pipfile_path)
+    os.environ["PIPENV_VIRTUALENV"] = os.path.join(str(venv.path))
     os.environ["VIRTUAL_ENV"] = os.path.join(str(venv.path))
     yield
     if old_pipfile:
@@ -86,8 +87,8 @@ def tox_testenv_install_deps(venv, action):
         args.append('--pre')
     with wrap_pipenv_environment(venv, pipfile_path):
         if deps:
-            action.setactivity("installdeps", "%s" % ",".join(list(map(str, deps))))
-            args += list(map(str, deps))
+            action.setactivity("installdeps", ",".join([str(x) for x in deps]))
+            args += [str(x) for x in deps]
         else:
             action.setactivity("installdeps", "[]")
         venv._pcall(args, venv=False, action=action, cwd=basepath)
@@ -111,8 +112,8 @@ def tox_runtest(venv, redirect):
             # have to make strings as _pcall changes argv[0] to a local()
             # happens if the same environment is invoked twice
             cwd = venv.envconfig.changedir
-            message = "commands[%s] | %s" % (i, " ".join([str(x) for x in argv]))
-            action.setactivity("runtests", message)
+            msg = "commands[%s] | %s" % (i, " ".join([str(x) for x in argv]))
+            action.setactivity("runtests", msg)
             # check to see if we need to ignore the return code
             # if so, we need to alter the command line arguments
             if argv[0].startswith("-"):
