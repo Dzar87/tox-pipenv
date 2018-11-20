@@ -16,7 +16,25 @@ def _init_pipenv_environ():
     os.environ["PIPENV_YES"] = "1"
 
     # don't use pew
-    os.environ["PIPENV_VENV_IN_PROJECT"] = "1"
+    # os.environ["PIPENV_VENV_IN_PROJECT"] = "1"
+
+    # The above environment flag creates a venv in the
+    # <your_project>/.tox/<envname>/.venv directory
+    # This however does not repect the site-packages flag
+    # leading to ALL the packages being installed again for each environment
+    # separately, even if they are already installed in the parent environment.
+    # This can certainly be advantagous for some projects,
+    # but for projects with many dependencies this adds unecessary overhead for
+    # unit-tests.
+    #
+    # Not setting the environement variable, ie. using pew, creates the virtual
+    # environment under ~/.local/share/virtualenvs/<tox_env>/
+    # This environment will only contain the dependencies needed for running
+    # tests of a specific test environment, significanly reducing setup time.
+    #
+    # Whether the undesired effect is due pipenv or tox-pipenv remains unclear.
+    # Not setting the environment variable is not the perfect solution, but
+    # solves my immediate issues.
 
 
 def _clone_pipfile(venv):
